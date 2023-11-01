@@ -46,7 +46,7 @@ export default function ActivityList() {
   return (
     <div className="border-t border-white/10 pt-11">
       <h2 className="px-4 text-base font-semibold leading-7 text-white sm:px-6 lg:px-8">
-        Latest activity
+        Accounts activity
       </h2>
       <div className="w-full">
         <div className="ag-theme-alpine-dark h-[600px] mt-6 w-full pt-0 pb-5 px-8">
@@ -89,7 +89,7 @@ const statuses = {
   Error: "text-rose-400 bg-rose-400/10",
 };
 
-const columnDefs = [
+ const columnDefs = [
   {
     field: "user",
     headerName: "User ID",

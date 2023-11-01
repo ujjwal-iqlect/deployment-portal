@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Dialog, Listbox, Transition } from "@headlessui/react";
 import {
   CheckIcon,
@@ -8,16 +8,21 @@ import {
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import { classNames } from "@/config/constant";
-import { Autocomplete, Modal, TextField } from "@mui/material";
+import { Autocomplete, Button, Modal, TextField } from "@mui/material";
 
 export default function ChangeServersModal({
   open,
   setOpen,
-  changeEmail,
+  changeServers,
   uInfo,
 }) {
-  const [userInfo, setUserInfo] = useState(uInfo ?? {});
-  const [deploymentType, setDeploymentType] = useState(uInfo?.server_details);
+  const [userInfo, setUserInfo] = useState({});
+  const [deploymentType, setDeploymentType] = useState();
+
+  useEffect(() => {
+    setDeploymentType(uInfo?.server_details?.length === 1 ? 1 : 2);
+    setUserInfo(uInfo);
+  }, [uInfo, uInfo?.server_details]);
 
   return (
     <Modal open={open} onClose={() => setOpen(false)}>
@@ -49,202 +54,287 @@ export default function ChangeServersModal({
                 />
               </div>
               <div className="sm:col-span-4"></div>
-              <>
-                <div className="sm:col-span-6 font-bold">Training</div>
-                <div className="sm:col-span-3">
-                  <TextField
-                    value={
-                      userInfo?.server_details?.find((x) => x.type === 1)?.ip
-                    }
-                    fullWidth
-                    onChange={(e) =>
-                      setUserInfo({
-                        ...userInfo,
-                        server_details: userInfo.server_details.map((item) => {
-                          if (item.type === 1) {
-                            return {
-                              ...item,
-                              type: 2,
-                              ip: e.target.value,
-                            };
-                          } else {
-                            return item;
-                          }
-                        }),
-                      })
-                    }
-                    id="standard-basic"
-                    placeholder="IP"
-                    variant="outlined"
-                  />
-                </div>
-                <div className="sm:col-span-3">
-                  <TextField
-                    value={
-                      userInfo?.server_details?.find((x) => x.type === 1)?.port
-                    }
-                    fullWidth
-                    onChange={(e) =>
-                      setUserInfo({
-                        ...userInfo,
-                        server_details: userInfo.server_details.map((item) => {
-                          if (item.type === 1) {
-                            return {
-                              ...item,
-                              type: 1,
-                              port: e.target.value,
-                            };
-                          } else {
-                            return item;
-                          }
-                        }),
-                      })
-                    }
-                    id="standard-basic"
-                    placeholder="PORT"
-                    variant="outlined"
-                  />
-                </div>
-              </>
-              <>
-                <div className="sm:col-span-6 font-bold">DB / BE</div>
-                <div className="sm:col-span-3">
-                  <TextField
-                    value={
-                      userInfo?.server_details?.find((x) => x.type === 2)?.ip
-                    }
-                    fullWidth
-                    onChange={(e) =>
-                      setUserInfo({
-                        ...userInfo,
-                        server_details: userInfo.server_details.map((item) => {
-                          if (item.type === 1) {
-                            return {
-                              ...item,
-                              type: 2,
-                              ip: e.target.value,
-                            };
-                          } else {
-                            return item;
-                          }
-                        }),
-                      })
-                    }
-                    id="standard-basic"
-                    placeholder="IP"
-                    variant="outlined"
-                  />
-                </div>
-                <div className="sm:col-span-3">
-                  <TextField
-                    value={
-                      userInfo?.server_details?.find((x) => x.type === 3)?.port
-                    }
-                    fullWidth
-                    onChange={(e) =>
-                      setUserInfo({
-                        ...userInfo,
-                        server_details: userInfo.server_details.map((item) => {
-                          if (item.type === 1) {
-                            return {
-                              ...item,
-                              type: 1,
-                              port: e.target.value,
-                            };
-                          } else {
-                            return item;
-                          }
-                        }),
-                      })
-                    }
-                    id="standard-basic"
-                    placeholder="PORT"
-                    variant="outlined"
-                  />
-                </div>
-              </>
-              <>
-                <div className="sm:col-span-6 font-bold">BRS</div>
-                <div className="sm:col-span-3">
-                  <TextField
-                    value={
-                      userInfo?.server_details?.find((x) => x.type === 1)?.ip
-                    }
-                    fullWidth
-                    onChange={(e) =>
-                      setUserInfo({
-                        ...userInfo,
-                        server_details: userInfo.server_details.map((item) => {
-                          if (item.type === 1) {
-                            return {
-                              ...item,
-                              type: 2,
-                              ip: e.target.value,
-                            };
-                          } else {
-                            return item;
-                          }
-                        }),
-                      })
-                    }
-                    id="standard-basic"
-                    placeholder="IP"
-                    variant="outlined"
-                  />
-                </div>
-                <div className="sm:col-span-3">
-                  <TextField
-                    value={
-                      userInfo?.server_details?.find((x) => x.type === 1)?.port
-                    }
-                    fullWidth
-                    onChange={(e) =>
-                      setUserInfo({
-                        ...userInfo,
-                        server_details: userInfo.server_details.map((item) => {
-                          if (item.type === 1) {
-                            return {
-                              ...item,
-                              type: 1,
-                              port: e.target.value,
-                            };
-                          } else {
-                            return item;
-                          }
-                        }),
-                      })
-                    }
-                    id="standard-basic"
-                    placeholder="PORT"
-                    variant="outlined"
-                  />
-                </div>
-              </>
+              {deploymentType === 2 && (
+                <>
+                  <>
+                    <div className="sm:col-span-6 font-bold">Training</div>
+                    <div className="sm:col-span-3">
+                      <TextField
+                        value={
+                          userInfo?.server_details?.find((x) => x.type === 1)
+                            ?.ip
+                        }
+                        fullWidth
+                        onChange={(e) =>
+                          setUserInfo({
+                            ...userInfo,
+                            server_details: userInfo.server_details.map(
+                              (item) => {
+                                if (item.type === 1) {
+                                  return {
+                                    ...item,
+                                    type: 2,
+                                    ip: e.target.value,
+                                  };
+                                } else {
+                                  return item;
+                                }
+                              }
+                            ),
+                          })
+                        }
+                        id="standard-basic"
+                        placeholder="IP"
+                        variant="outlined"
+                      />
+                    </div>
+                    <div className="sm:col-span-3">
+                      <TextField
+                        value={
+                          userInfo?.server_details?.find((x) => x.type === 1)
+                            ?.port
+                        }
+                        fullWidth
+                        onChange={(e) =>
+                          setUserInfo({
+                            ...userInfo,
+                            server_details: userInfo.server_details.map(
+                              (item) => {
+                                if (item.type === 1) {
+                                  return {
+                                    ...item,
+                                    type: 1,
+                                    port: e.target.value,
+                                  };
+                                } else {
+                                  return item;
+                                }
+                              }
+                            ),
+                          })
+                        }
+                        id="standard-basic"
+                        placeholder="PORT"
+                        variant="outlined"
+                      />
+                    </div>
+                  </>
+                  <>
+                    <div className="sm:col-span-6 font-bold">DB / BE</div>
+                    <div className="sm:col-span-3">
+                      <TextField
+                        value={
+                          userInfo?.server_details?.find((x) => x.type === 2)
+                            ?.ip
+                        }
+                        fullWidth
+                        onChange={(e) =>
+                          setUserInfo({
+                            ...userInfo,
+                            server_details: userInfo.server_details.map(
+                              (item) => {
+                                if (item.type === 1) {
+                                  return {
+                                    ...item,
+                                    type: 2,
+                                    ip: e.target.value,
+                                  };
+                                } else {
+                                  return item;
+                                }
+                              }
+                            ),
+                          })
+                        }
+                        id="standard-basic"
+                        placeholder="IP"
+                        variant="outlined"
+                      />
+                    </div>
+                    <div className="sm:col-span-3">
+                      <TextField
+                        value={
+                          userInfo?.server_details?.find((x) => x.type === 3)
+                            ?.port
+                        }
+                        fullWidth
+                        onChange={(e) =>
+                          setUserInfo({
+                            ...userInfo,
+                            server_details: userInfo.server_details.map(
+                              (item) => {
+                                if (item.type === 1) {
+                                  return {
+                                    ...item,
+                                    type: 1,
+                                    port: e.target.value,
+                                  };
+                                } else {
+                                  return item;
+                                }
+                              }
+                            ),
+                          })
+                        }
+                        id="standard-basic"
+                        placeholder="PORT"
+                        variant="outlined"
+                      />
+                    </div>
+                  </>
+                  <>
+                    <div className="sm:col-span-6 font-bold">BRS</div>
+                    <div className="sm:col-span-3">
+                      <TextField
+                        value={
+                          userInfo?.server_details?.find((x) => x.type === 1)
+                            ?.ip
+                        }
+                        fullWidth
+                        onChange={(e) =>
+                          setUserInfo({
+                            ...userInfo,
+                            server_details: userInfo.server_details.map(
+                              (item) => {
+                                if (item.type === 1) {
+                                  return {
+                                    ...item,
+                                    type: 2,
+                                    ip: e.target.value,
+                                  };
+                                } else {
+                                  return item;
+                                }
+                              }
+                            ),
+                          })
+                        }
+                        id="standard-basic"
+                        placeholder="IP"
+                        variant="outlined"
+                      />
+                    </div>
+                    <div className="sm:col-span-3">
+                      <TextField
+                        value={
+                          userInfo?.server_details?.find((x) => x.type === 1)
+                            ?.port
+                        }
+                        fullWidth
+                        onChange={(e) =>
+                          setUserInfo({
+                            ...userInfo,
+                            server_details: userInfo.server_details.map(
+                              (item) => {
+                                if (item.type === 1) {
+                                  return {
+                                    ...item,
+                                    type: 1,
+                                    port: e.target.value,
+                                  };
+                                } else {
+                                  return item;
+                                }
+                              }
+                            ),
+                          })
+                        }
+                        id="standard-basic"
+                        placeholder="PORT"
+                        variant="outlined"
+                      />
+                    </div>
+                  </>
+                </>
+              )}
+
+              {deploymentType === 1 && (
+                <>
+                  <div className="sm:col-span-6 font-bold">DB / BE</div>
+                  <div className="sm:col-span-3">
+                    <TextField
+                      value={
+                        userInfo?.server_details?.find((x) => x.type === 4)?.ip
+                      }
+                      fullWidth
+                      onChange={(e) =>
+                        setUserInfo({
+                          ...userInfo,
+                          server_details: userInfo.server_details.map(
+                            (item) => {
+                              if (item.type === 4) {
+                                return {
+                                  ...item,
+                                  type: 4,
+                                  ip: e.target.value,
+                                };
+                              } else {
+                                return item;
+                              }
+                            }
+                          ),
+                        })
+                      }
+                      id="standard-basic"
+                      placeholder="IP"
+                      variant="outlined"
+                    />
+                  </div>
+                  <div className="sm:col-span-3">
+                    <TextField
+                      value={
+                        userInfo?.server_details?.find((x) => x.type === 4)
+                          ?.port
+                      }
+                      fullWidth
+                      onChange={(e) =>
+                        setUserInfo({
+                          ...userInfo,
+                          server_details: userInfo.server_details.map(
+                            (item) => {
+                              if (item.type === 4) {
+                                return {
+                                  ...item,
+                                  type: 4,
+                                  port: e.target.value,
+                                };
+                              } else {
+                                return item;
+                              }
+                            }
+                          ),
+                        })
+                      }
+                      id="standard-basic"
+                      placeholder="PORT"
+                      variant="outlined"
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="w-full flex items-center justify-end pt-10 normal-case">
+              <Button
+                variant="outlined"
+                sx={{ textTransform: "none" }}
+                onClick={() => {
+                  setOpen(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                sx={{ textTransform: "none", ml: 2 }}
+                onClick={() => {
+                  changeServers(deploymentType, userInfo?.server_details);
+                  setOpen(false);
+                }}
+              >
+                Save
+              </Button>
             </div>
           </div>
-        </div>
-
-        <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-          <button
-            type="button"
-            className="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:ml-3 sm:w-auto"
-            onClick={() => {
-              // setOpen(false);
-            }}
-          >
-            Save
-          </button>
-          <button
-            type="button"
-            className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
-            onClick={() => {
-              // setValue(null);
-              // setOpen(false);
-            }}
-            //   ref={cancelButtonRef}
-          >
-            Cancel
-          </button>
         </div>
       </>
     </Modal>

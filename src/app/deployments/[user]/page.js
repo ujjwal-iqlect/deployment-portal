@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-
+import "ag-grid-community/styles/ag-grid.css"; // Core grid CSS, always needed
+import "ag-grid-community/styles/ag-theme-alpine.css"; // Optional theme CSS
 // export default function User() {
 //   const pathname = usePathname();
 //   const userid = pathname?.slice(13);
@@ -37,6 +38,7 @@ import {
   UserIcon,
 } from "@heroicons/react/20/solid";
 import {
+  BanknotesIcon,
   ChartBarSquareIcon,
   Cog6ToothIcon,
   FolderIcon,
@@ -48,10 +50,12 @@ import {
 import { Bars3Icon, BellIcon } from "@heroicons/react/24/outline";
 import { useDispatch, useSelector } from "react-redux";
 import { deploymentReducer } from "@/redux/reducers/deploymentReducer";
-import { classNames } from "@/config/constant";
+import { classNames, defaultColDef, timeAgo } from "@/config/constant";
 import {
+  addServerInfo,
   changeUserPassword,
   getAccountInfo,
+  getAccountUsers,
   getAllAccounts,
   getUserInfo,
   updateAccount,
@@ -63,6 +67,11 @@ import ChangePhoneModal from "@/components/ChangePhoneModal";
 import ChangeEmailModal from "@/components/ChangeEmailModal";
 import LoadingBar from "react-top-loading-bar";
 import ChangeServersModal from "@/components/ChangeServersModal";
+import { fetchSubscription } from "@/api/CloudService";
+import dayjs from "dayjs";
+import { AgGridReact } from "ag-grid-react";
+import UserRenderer from "@/components/CellRenderers/UserRenderer";
+import ChangeLicenseModal from "@/components/ChangeLicenseModal";
 
 const user = {
   name: "Whitney Francis",
@@ -161,27 +170,52 @@ export default function User() {
   const pathname = usePathname();
   const userid = pathname?.slice(13);
   const dispatch = useDispatch();
+  const gridRef = useRef(null);
   const [progress, setProgress] = useState(0);
+  const [activeTab, setActiveTab] = useState(0);
 
   const { userList } = useSelector((state) => state.deploymentReducer);
+  const [accountInfo, setAccountInfo] = useState({});
   const [userInfo, setUserInfo] = useState({});
   const [loading, setLoading] = useState(false);
   const [openPasswordChange, setOpenPasswordChange] = useState(false);
   const [openEmailChange, setOpenEmailChange] = useState(false);
   const [openPhoneChange, setOpenPhoneChange] = useState(false);
   const [openChangeServers, setOpenChangeServers] = useState(false);
+  const [openChangeLicense, setOpenChangeLicense] = useState(false);
+
+  const getRowId = useMemo(() => {
+    return (params) => params.data.userid;
+  }, []);
 
   useEffect(() => {
-    const userInfo = async () => {
+    const getUserAndAccountInfo = async () => {
       setProgress(30);
       setLoading(true);
-      const info = await getUserInfo({ userid });
-      setUserInfo(info);
+
+      const uinfo = await getUserInfo({ userid });
+      setUserInfo(uinfo);
+
+      const ainfo = await getAccountUsers({
+        user_account: uinfo?.user_account,
+      });
+
+      if (ainfo?.subscription_details?.length > 0) {
+        for (const subscription of ainfo?.subscription_details) {
+          const res = await fetchSubscription({ id: subscription?.account_id });
+          if (res) {
+            subscription.razorpay_subscription = res;
+          }
+        }
+      }
+
+      setAccountInfo(ainfo);
+
       setLoading(false);
       setProgress(100);
     };
 
-    userInfo();
+    getUserAndAccountInfo();
   }, []);
 
   const activateUser = async (userid, apikey) => {
@@ -250,17 +284,28 @@ export default function User() {
     }
   };
 
-  const changeLicense = async (userid, license) => {
+  const changeLicense = async (license) => {
     const payload = {
       userid,
       apikey: userInfo?.apikey,
-      user_info: { license },
+      user_info: { ...userInfo, license },
     };
 
     const change = await updateUser(payload);
 
     if (change?.errcode === 0) {
       alert("License type changed successfully");
+    }
+  };
+
+  const changeServers = async (deployment_type, servers) => {
+    const change = await addServerInfo({
+      userid,
+      server_info: { deployment_type, servers },
+    });
+
+    if (change?.errcode === 0) {
+      alert("Successfully updated the servers");
     }
   };
 
@@ -489,7 +534,7 @@ export default function User() {
                             reprehenderit deserunt qui eu.
                           </dd>
                         </div> */}
-                        <div className="sm:col-span-2">
+                        {/* <div className="sm:col-span-2">
                           <dt className="text-sm font-medium text-gray-500">
                             Last 5 Invoices
                           </dt>
@@ -524,101 +569,144 @@ export default function User() {
                               ))}
                             </ul>
                           </dd>
-                        </div>
+                        </div> */}
                       </dl>
                     </div>
                     <div>
                       <a
                         href="#"
-                        className="block bg-gray-50 px-4 py-4 text-center text-sm font-medium text-gray-500 hover:text-gray-700 sm:rounded-b-lg"
+                        className="block bg-white px-4 pt-3.5 pb-7 text-center text-sm font-medium text-gray-500 hover:text-gray-700 sm:rounded-b-lg"
                       >
-                        See all invoices
+                        {/* See all invoices */}
                       </a>
                     </div>
                   </div>
                 </section>
+              </div>
 
+              <div className="space-y-6 lg:col-span-3 lg:col-start-1">
                 {/* Comments*/}
-                <section aria-labelledby="notes-title">
+                <section aria-labelledby="notes-title" className="w-full">
                   <div className="bg-white shadow sm:overflow-hidden sm:rounded-lg">
                     <div className="divide-y divide-gray-200">
                       <div className="px-4 py-5 sm:px-6">
-                        <h2
-                          id="notes-title"
-                          className="text-lg font-medium text-gray-900"
-                        >
-                          Notes
-                        </h2>
+                        <div className="hidden sm:block">
+                          <nav className="flex space-x-4" aria-label="Tabs">
+                            {tabs.map((tab) => (
+                              <a
+                                key={tab.name}
+                                onClick={() => {
+                                  setActiveTab(tab.val);
+                                }}
+                                className={classNames(
+                                  tab.val === activeTab
+                                    ? "bg-indigo-100 text-indigo-700"
+                                    : "text-gray-500 hover:text-gray-700",
+                                  "rounded-md px-3 py-2 text-sm font-medium cursor-pointer"
+                                )}
+                                aria-current={
+                                  tab.val === activeTab ? "page" : undefined
+                                }
+                              >
+                                {tab.name}
+                              </a>
+                            ))}
+                          </nav>
+                        </div>
                       </div>
-                      <div className="px-4 py-6 sm:px-6">
-                        <ul role="list" className="space-y-8">
-                          {comments.map((comment) => (
-                            <li key={comment.id}>
-                              <div className="flex space-x-3">
-                                <div className="flex-shrink-0">
-                                  <img
-                                    className="h-10 w-10 rounded-full"
-                                    src={`https://images.unsplash.com/photo-${comment.imageId}?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80`}
-                                    alt=""
-                                  />
-                                </div>
-                                <div>
-                                  <div className="text-sm">
-                                    <a
-                                      href="#"
-                                      className="font-medium text-gray-900"
-                                    >
-                                      {comment.name}
-                                    </a>
-                                  </div>
-                                  <div className="mt-1 text-sm text-gray-700">
-                                    <p>{comment.body}</p>
-                                  </div>
-                                  <div className="mt-2 space-x-2 text-sm">
-                                    <span className="font-medium text-gray-500">
-                                      {comment.date}
-                                    </span>{" "}
-                                    {/* <span className="font-medium text-gray-500">
-                                    &middot;
-                                  </span>{" "} */}
-                                    {/* <button
-                                    type="button"
-                                    className="font-medium text-gray-900"
-                                  >
-                                    Reply
-                                  </button> */}
-                                  </div>
-                                </div>
-                              </div>
-                            </li>
-                          ))}
+
+                      {activeTab === 0 && (
+                        <ul role="list" className="space-y-8 px-4 py-2">
+                          <table>
+                            <tbody>
+                              {accountInfo?.subscription_details?.map(
+                                (transaction, index) => (
+                                  <tr key={index} className="bg-white border-b">
+                                    <td className="w-full max-w-0 whitespace-nowrap py-2 px-4 text-sm text-gray-900">
+                                      <div className="flex">
+                                        <a className="group inline-flex space-x-2 truncate text-sm">
+                                          <BanknotesIcon
+                                            className="h-5 w-5 flex-shrink-0 text-gray-400 group-hover:text-gray-500"
+                                            aria-hidden="true"
+                                          />
+                                          <p className="truncate text-gray-500 group-hover:text-gray-900">
+                                            {
+                                              planIdMap[
+                                                transaction
+                                                  ?.razorpay_subscription
+                                                  ?.plan_id
+                                              ]
+                                            }
+                                          </p>
+                                        </a>
+                                      </div>
+                                    </td>
+                                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-500">
+                                      <span className="font-medium text-gray-900">
+                                        {/* {transaction.amount} */}
+                                        999
+                                      </span>{" "}
+                                      {/* {transaction.currency} */}
+                                      INR
+                                    </td>
+                                    <td className="hidden whitespace-nowrap px-6 py-4 text-sm text-gray-500 md:block">
+                                      <span
+                                        className={classNames(
+                                          statusStyles[
+                                            transaction?.razorpay_subscription?.status?.toLowerCase()
+                                          ],
+                                          "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize"
+                                        )}
+                                      >
+                                        {transaction?.razorpay_subscription?.status?.toLowerCase()}
+                                      </span>
+                                    </td>
+                                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-900">
+                                      <p className="truncate text-gray-500 group-hover:text-gray-950">
+                                        {dayjs(
+                                          transaction?.razorpay_subscription
+                                            ?.created_at * 1000
+                                        ).format("MMMM DD, YYYY")}
+                                      </p>
+                                    </td>
+                                  </tr>
+                                )
+                              )}
+                            </tbody>
+                          </table>
                         </ul>
-                      </div>
+                      )}
+
+                      {activeTab === 1 && (
+                        <div className="py-2 border-b">
+                          <div className="w-full">
+                            <div className="ag-theme-alpine h-[600px] mt-6 w-full pt-0 pb-5 px-8">
+                              <AgGridReact
+                                ref={gridRef} // Ref for accessing Grid's API
+                                rowData={accountInfo?.users} // Row Data for Rows
+                                columnDefs={columnDefs} // Column Defs for Columns
+                                defaultColDef={defaultColDef} // Default Column Properties
+                                animateRows={true} // Optional - set to 'true' to have rows animate when sorted
+                                pagination={true}
+                                paginationPageSize={25}
+                                getRowId={getRowId}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <div className="bg-gray-50 px-4 py-6 sm:px-6">
                       <div className="flex space-x-3">
                         <div className="flex-shrink-0">
                           {/* <img
-                          className="h-10 w-10 rounded-full"
-                          src={user.imageUrl}
-                          alt=""
-                        /> */}
+                            className="h-10 w-10 rounded-full"
+                            src={user.imageUrl}
+                            alt=""
+                          /> */}
                         </div>
                         <div className="min-w-0 flex-1">
                           <form action="#">
-                            <div>
-                              <label htmlFor="comment" className="sr-only">
-                                About
-                              </label>
-                              <textarea
-                                id="comment"
-                                name="comment"
-                                rows={3}
-                                className="block w-full rounded-md border-0 py-1.5 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
-                                placeholder="Add a note"
-                                defaultValue={""}
-                              />
-                            </div>
                             <div className="mt-3 flex items-center justify-between">
                               <a
                                 href="#"
@@ -628,14 +716,8 @@ export default function User() {
                                   className="h-5 w-5 flex-shrink-0 text-gray-400 group-hover:text-gray-500"
                                   aria-hidden="true"
                                 />
-                                <span>Some HTML is okay.</span>
+                                <span>Need help</span>
                               </a>
-                              <button
-                                type="submit"
-                                className="inline-flex items-center justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                              >
-                                Comment
-                              </button>
                             </div>
                           </form>
                         </div>
@@ -731,7 +813,7 @@ export default function User() {
                       type="button"
                       className="inline-flex items-center justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                       onClick={() => setOpenPasswordChange(true)}
-                      >
+                    >
                       Change Password
                     </button>
                   </div>
@@ -748,6 +830,7 @@ export default function User() {
                     <button
                       type="button"
                       className="inline-flex items-center justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                      onClick={() => setOpenChangeLicense(true)}
                     >
                       Assign new license type
                     </button>
@@ -781,7 +864,14 @@ export default function User() {
         open={openChangeServers}
         setOpen={setOpenChangeServers}
         uInfo={userInfo}
-        changeEmail={(email) => changeEmail(userid, email)}
+        changeServers={changeServers}
+      />
+
+      <ChangeLicenseModal
+        open={openChangeLicense}
+        setOpen={setOpenChangeLicense}
+        currentLicense={userInfo?.license}
+        changeLicense={changeLicense}
       />
     </>
   );
@@ -808,4 +898,149 @@ export const secondaryNavigation = [
   { name: "Settings", href: "#", current: false },
   { name: "Collaborators", href: "#", current: false },
   { name: "Notifications", href: "#", current: false },
+];
+
+const tabs = [
+  { name: "Billing Transactions", val: 0 },
+  { name: "Users", val: 1 },
+  // { name: "Invoices", val: 2 },
+  // { name: "Billing", val: 3 },
+];
+
+const statusStyles = {
+  success: "bg-green-100 text-green-800",
+  processing: "bg-yellow-100 text-yellow-800",
+  failed: "bg-gray-100 text-gray-800",
+  cancelled: "bg-red-100 text-red-800",
+};
+
+const planIdMap = {
+  plan_MuNkfumsmjEqss: "BangDB Pro - SAAS",
+  plan_Ms0kWmfziviZUn: "Bug Tracker - Premium",
+  plan_Ms0jVNzfOeK9Gy: "Bug Tracker - Basic",
+};
+
+const columnDefs = [
+  {
+    field: "userid",
+    headerName: "User ID",
+    tooltip: "userid",
+    cellRenderer: UserRenderer,
+    cellRendererParams: { black: true },
+    cellClass: "crm-table-cell",
+  },
+  {
+    field: "first_name",
+    headerName: "Name",
+    tooltip: "userid",
+    valueFormatter: (params) => {
+      const value = `${params?.data?.first_name || ""} ${
+        params?.data?.middle_name || ""
+      } ${params?.data?.last_name || ""}`;
+      return value;
+    },
+    cellClass: "crm-table-cell",
+  },
+  {
+    field: "email",
+    headerName: "Email",
+    tooltip: "email",
+    cellClass: "crm-table-cell",
+  },
+  {
+    field: "phone",
+    headerName: "Phone",
+    tooltip: "phone",
+    cellClass: "crm-table-cell",
+  },
+  {
+    field: "status",
+    headerName: "Status",
+    tooltip: "status",
+    cellClass: "crm-table-cell",
+  },
+  {
+    field: "user_type",
+    headerName: "User Type",
+    tooltip: "user_type",
+    cellClass: "crm-table-cell",
+  },
+  {
+    field: "license",
+    headerName: "License Type",
+    tooltip: "license",
+    cellClass: "crm-table-cell",
+  },
+  {
+    field: "license_amount",
+    headerName: "License Amount",
+    tooltip: "license_amount",
+    valueFormatter: () => {
+      return "N/A";
+    },
+    cellClass: "crm-table-cell",
+  },
+  {
+    field: "signup_date",
+    headerName: "Signup Date",
+    tooltip: "signup_date",
+    valueFormatter: () => {
+      return "26/10/2023" ?? "N/A";
+    },
+    cellClass: "crm-table-cell",
+  },
+  {
+    field: "server_id",
+    headerName: "Server id and Health of server",
+    tooltip: "server_id",
+    valueFormatter: () => {
+      return "N/A";
+    },
+    cellClass: "crm-table-cell",
+  },
+  {
+    field: "total_amount_paid",
+    headerName: "Total Amount Paid",
+    tooltip: "total_amount_paid",
+    valueFormatter: () => {
+      return "999";
+    },
+    cellClass: "crm-table-cell",
+  },
+  {
+    field: "last_paid_date",
+    headerName: "Total Amount Paid",
+    tooltip: "last_paid_date",
+    valueFormatter: () => {
+      return "23/10/2023";
+    },
+    cellClass: "crm-table-cell",
+  },
+  {
+    field: "overdue_amount",
+    headerName: "Overdue Amount",
+    tooltip: "overdue_amount",
+    valueFormatter: () => {
+      return "3920";
+    },
+    cellClass: "crm-table-cell",
+  },
+  {
+    field: "overdue_days",
+    headerName: "Overdue ( No. of Days )",
+    tooltip: "overdue_days",
+    valueFormatter: () => {
+      return "23/10/2023";
+    },
+    cellClass: "crm-table-cell",
+  },
+  {
+    field: "last_paid_date",
+    headerName: "Total Amount Paid",
+    tooltip: "last_paid_date",
+    valueFormatter: () => {
+      return "23/10/2023";
+    },
+    cellClass: "crm-table-cell",
+  },
 ];

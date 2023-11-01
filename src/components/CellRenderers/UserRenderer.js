@@ -1,3 +1,4 @@
+import { classNames } from "@/config/constant";
 import React from "react";
 
 export default function UserRenderer(props) {
@@ -10,8 +11,13 @@ export default function UserRenderer(props) {
         alt=""
         className="h-8 w-8 rounded-full bg-gray-800"
       />
-      <div className="truncate text-sm leading-6 text-white">
-        {props?.value || ''}
+      <div
+        className={classNames(
+          "truncate text-sm leading-6",
+          props?.black ? null : "text-white"
+        )}
+      >
+        {props?.value || ""}
       </div>
     </div>
   );

@@ -15,6 +15,8 @@ export const userService = axios.create({
 export const getAccountUsers = async (payload) => {
   const res = await userService.post("/user/get_users", {
     ...payload,
+    admin: "super_admin1",
+    admin_pwd: "sudo_admin_9",
     op: 1,
   });
 
@@ -72,6 +74,16 @@ export const updateAccount = async (payload) => {
 
 export const changeUserPassword = async (payload) => {
   const res = await userService.post("/user/change_pwd", {
+    admin: "super_admin1",
+    admin_pwd: "sudo_admin_9",
+    ...payload,
+  });
+
+  return res.data;
+};
+
+export const addServerInfo = async (payload) => {
+  const res = await userService.post("/user/add_server_info", {
     admin: "super_admin1",
     admin_pwd: "sudo_admin_9",
     ...payload,

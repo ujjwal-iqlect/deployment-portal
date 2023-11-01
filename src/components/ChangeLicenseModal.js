@@ -1,14 +1,22 @@
 "use client";
 
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import { TextField } from "@mui/material";
+import { Autocomplete, TextField } from "@mui/material";
 
-export default function ChangeEmailModal({ open, setOpen, changeEmail }) {
-  const [value, setValue] = useState(null);
-
+export default function ChangeLicenseModal({
+  open,
+  setOpen,
+  currentLicense,
+  changeLicense,
+}) {
+  const [value, setValue] = useState();
   const cancelButtonRef = useRef(null);
+
+  useEffect(() => {
+    setValue(currentLicense);
+  }, [currentLicense]);
 
   return (
     <Transition.Root show={open} as={Fragment}>
@@ -55,18 +63,23 @@ export default function ChangeEmailModal({ open, setOpen, changeEmail }) {
                         as="h3"
                         className="text-base font-semibold leading-6 text-gray-900"
                       >
-                        Change E-mail
+                        Change License
                       </Dialog.Title>
                       <div className="mt-5">
                         <div className="w-full">
-                          <TextField
-                            type="email"
-                            name="email"
-                            id="email"
-                            fullWidth
+                          <Autocomplete
+                            options={["L1", "L2", "L3", "LSAAS", "WORKER"]}
                             value={value}
-                            onChange={(e) => setValue(e.target.value)}
-                            label="New E-mail"
+                            onChange={(e, newVal) => {
+                              setValue(newVal);
+                            }}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                label="Select License Type"
+                                variant="outlined"
+                              />
+                            )}
                           />
                         </div>
                         {/* <p className="text-sm text-gray-500">
@@ -83,7 +96,7 @@ export default function ChangeEmailModal({ open, setOpen, changeEmail }) {
                     type="button"
                     className="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:ml-3 sm:w-auto"
                     onClick={() => {
-                      changeEmail(value);
+                      changeLicense(value);
                       setValue(null);
                       setOpen(false);
                     }}

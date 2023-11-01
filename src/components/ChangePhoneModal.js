@@ -3,8 +3,14 @@
 import { Fragment, useRef, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { TextField } from "@mui/material";
 
-export default function ChangePhoneModal({ open, setOpen, currentPhone, changePhone }) {
+export default function ChangePhoneModal({
+  open,
+  setOpen,
+  currentPhone,
+  changePhone,
+}) {
   const [value, setValue] = useState(currentPhone || null);
 
   const cancelButtonRef = useRef(null);
@@ -56,16 +62,16 @@ export default function ChangePhoneModal({ open, setOpen, currentPhone, changePh
                       >
                         Change Phone
                       </Dialog.Title>
-                      <div className="mt-3">
+                      <div className="mt-5">
                         <div className="w-full">
-                          <input
+                          <TextField
                             type="number"
                             name="phone"
                             id="phone"
+                            fullWidth
                             value={value}
                             onChange={(e) => setValue(e.target.value)}
-                            className="w-full block rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                            placeholder="Phone number"
+                            label="New Phone Number"
                           />
                         </div>
                         {/* <p className="text-sm text-gray-500">
