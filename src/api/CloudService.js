@@ -9,7 +9,7 @@ const headers = {
 
 export const cloudService = axios.create({
   headers,
-  baseURL: `http://${'localhost:5000' || cloudServiceEndPoint}`,
+  baseURL: `https://${cloudServiceEndPoint}`,
 });
 
 export const fetchSubscription = async (payload) => {
