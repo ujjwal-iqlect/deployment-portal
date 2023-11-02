@@ -147,15 +147,9 @@ const comments = [
   },
 ];
 
-export default function User({ params }) {
-  const userid = decodeURI(params.user);
-  const dispatch = useDispatch();
-  const gridRef = useRef(null);
+export default function Userid({ params }) {
+  const userid = decodeURI(params.userid);
   const [progress, setProgress] = useState(0);
-  const [activeTab, setActiveTab] = useState(0);
-
-  const { userList } = useSelector((state) => state.deploymentReducer);
-  const [accountInfo, setAccountInfo] = useState({});
   const [userInfo, setUserInfo] = useState({});
   const [loading, setLoading] = useState(false);
   const [openPasswordChange, setOpenPasswordChange] = useState(false);
@@ -164,12 +158,6 @@ export default function User({ params }) {
   const [openChangeServers, setOpenChangeServers] = useState(false);
   const [openChangeLicense, setOpenChangeLicense] = useState(false);
 
-  const router = useRouter();
-
-  const getRowId = useMemo(() => {
-    return (params) => params.data.userid;
-  }, []);
-
   useEffect(() => {
     const getUserAndAccountInfo = async () => {
       setProgress(30);
@@ -177,21 +165,6 @@ export default function User({ params }) {
 
       const uinfo = await getUserInfo({ userid });
       setUserInfo(uinfo);
-
-      const ainfo = await getAccountUsers({
-        user_account: uinfo?.user_account,
-      });
-
-      if (ainfo?.subscription_details?.length > 0) {
-        for (const subscription of ainfo?.subscription_details) {
-          const res = await fetchSubscription({ id: subscription?.account_id });
-          if (res) {
-            subscription.razorpay_subscription = res;
-          }
-        }
-      }
-
-      setAccountInfo(ainfo);
 
       setLoading(false);
       setProgress(100);
@@ -657,154 +630,6 @@ export default function User({ params }) {
                   changeLicense={changeLicense}
                   currentLicense={userInfo?.license}
                 />
-              </div>
-
-              <div className="space-y-6 lg:col-span-3 lg:col-start-1">
-                {/* Comments*/}
-                <section aria-labelledby="notes-title" className="w-full">
-                  <div className="bg-white shadow sm:overflow-hidden sm:rounded-lg">
-                    <div className="divide-y divide-gray-200">
-                      <div className="px-4 py-5 sm:px-6">
-                        <div className="hidden sm:block">
-                          <nav className="flex space-x-4" aria-label="Tabs">
-                            {tabs.map((tab) => (
-                              <a
-                                key={tab.name}
-                                onClick={() => {
-                                  setActiveTab(tab.val);
-                                }}
-                                className={classNames(
-                                  tab.val === activeTab
-                                    ? "bg-indigo-100 text-indigo-700"
-                                    : "text-gray-500 hover:text-gray-700",
-                                  "rounded-md px-3 py-2 text-sm font-medium cursor-pointer"
-                                )}
-                                aria-current={
-                                  tab.val === activeTab ? "page" : undefined
-                                }
-                              >
-                                {tab.name}
-                              </a>
-                            ))}
-                          </nav>
-                        </div>
-                      </div>
-
-                      {activeTab === 0 && (
-                        <ul role="list" className="space-y-8 px-4 py-2">
-                          <table>
-                            <tbody>
-                              {accountInfo?.subscription_details?.map(
-                                (transaction, index) => (
-                                  <tr key={index} className="bg-white border-b">
-                                    <td className="w-full max-w-0 whitespace-nowrap py-2 px-4 text-sm text-gray-900">
-                                      <div className="flex">
-                                        <a className="group inline-flex space-x-2 truncate text-sm">
-                                          <BanknotesIcon
-                                            className="h-5 w-5 flex-shrink-0 text-gray-400 group-hover:text-gray-500"
-                                            aria-hidden="true"
-                                          />
-                                          <p className="truncate text-gray-500 group-hover:text-gray-900">
-                                            {
-                                              planIdMap[
-                                                transaction
-                                                  ?.razorpay_subscription
-                                                  ?.plan_id
-                                              ]
-                                            }
-                                          </p>
-                                        </a>
-                                      </div>
-                                    </td>
-                                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-500">
-                                      <span className="font-medium text-gray-900">
-                                        {/* {transaction.amount} */}
-                                        999
-                                      </span>{" "}
-                                      {/* {transaction.currency} */}
-                                      INR
-                                    </td>
-                                    <td className="hidden whitespace-nowrap px-6 py-4 text-sm text-gray-500 md:block">
-                                      <span
-                                        className={classNames(
-                                          statusStyles[
-                                            transaction?.razorpay_subscription?.status?.toLowerCase()
-                                          ],
-                                          "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize"
-                                        )}
-                                      >
-                                        {transaction?.razorpay_subscription?.status?.toLowerCase()}
-                                      </span>
-                                    </td>
-                                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-900">
-                                      <p className="truncate text-gray-500 group-hover:text-gray-950">
-                                        {dayjs(
-                                          transaction?.razorpay_subscription
-                                            ?.created_at * 1000
-                                        ).format("MMMM DD, YYYY")}
-                                      </p>
-                                    </td>
-                                  </tr>
-                                )
-                              )}
-                            </tbody>
-                          </table>
-                        </ul>
-                      )}
-
-                      {activeTab === 1 && (
-                        <div className="py-2 border-b">
-                          <div className="w-full">
-                            <div className="ag-theme-alpine h-[600px] mt-6 w-full pt-0 pb-5 px-8">
-                              <AgGridReact
-                                ref={gridRef} // Ref for accessing Grid's API
-                                rowData={accountInfo?.users} // Row Data for Rows
-                                columnDefs={columnDefs} // Column Defs for Columns
-                                defaultColDef={defaultColDef} // Default Column Properties
-                                animateRows={true} // Optional - set to 'true' to have rows animate when sorted
-                                pagination={true}
-                                paginationPageSize={25}
-                                getRowId={getRowId}
-                                onRowClicked={(params) => {
-                                  router.push(
-                                    `/deployments/${userid}/${params?.data?.userid}`
-                                  );
-                                }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <div className="bg-gray-50 px-4 py-6 sm:px-6">
-                      <div className="flex space-x-3">
-                        <div className="flex-shrink-0">
-                          {/* <img
-                            className="h-10 w-10 rounded-full"
-                            src={user.imageUrl}
-                            alt=""
-                          /> */}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <form action="#">
-                            <div className="mt-3 flex items-center justify-between">
-                              <a
-                                href="#"
-                                className="group inline-flex items-start space-x-2 text-sm text-gray-500 hover:text-gray-900"
-                              >
-                                <QuestionMarkCircleIcon
-                                  className="h-5 w-5 flex-shrink-0 text-gray-400 group-hover:text-gray-500"
-                                  aria-hidden="true"
-                                />
-                                <span>Need help</span>
-                              </a>
-                            </div>
-                          </form>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </section>
               </div>
             </div>
           </main>

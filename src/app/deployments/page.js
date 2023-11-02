@@ -274,7 +274,7 @@ export default function Example() {
                       </span>
                       <span className="text-gray-600">/</span>
                       <span className="font-semibold text-white">
-                        app-users
+                        accounts
                       </span>
                     </h1>
                   </div>
@@ -328,12 +328,12 @@ export default function Example() {
 }
 
 export const navigation = [
-  { name: "Projects", href: "#", icon: FolderIcon, current: false },
+  // { name: "Projects", href: "#", icon: FolderIcon, current: false },
   { name: "Deployments", href: "#", icon: ServerIcon, current: true },
-  { name: "Activity", href: "#", icon: SignalIcon, current: false },
-  { name: "Domains", href: "#", icon: GlobeAltIcon, current: false },
-  { name: "Usage", href: "#", icon: ChartBarSquareIcon, current: false },
-  { name: "Settings", href: "#", icon: Cog6ToothIcon, current: false },
+  // { name: "Activity", href: "#", icon: SignalIcon, current: false },
+  // { name: "Domains", href: "#", icon: GlobeAltIcon, current: false },
+  // { name: "Usage", href: "#", icon: ChartBarSquareIcon, current: false },
+  // { name: "Settings", href: "#", icon: Cog6ToothIcon, current: false },
 ];
 
 export const teams = [
