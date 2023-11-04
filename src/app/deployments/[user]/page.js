@@ -46,7 +46,7 @@ import ChangePhoneModal from "@/components/ChangePhoneModal";
 import ChangeEmailModal from "@/components/ChangeEmailModal";
 import LoadingBar from "react-top-loading-bar";
 import ChangeServersModal from "@/components/ChangeServersModal";
-import { fetchSubscription } from "@/api/CloudService";
+import { fetchInvoice, fetchSubscription } from "@/api/CloudService";
 import dayjs from "dayjs";
 import { AgGridReact } from "ag-grid-react";
 import UserRenderer from "@/components/CellRenderers/UserRenderer";
@@ -289,6 +289,18 @@ export default function User({ params }) {
     if (change?.errcode === 0) {
       alert("Successfully updated the servers");
     }
+  };
+
+  const openInvoice = async (id) => {
+    const invoice = await fetchInvoice({
+      id,
+    });
+
+    console.log({
+      invoice,
+    });
+
+    window.open(invoice?.short_url, "BangDB Invoice", "height=1080,width=800");
   };
 
   return (
@@ -715,6 +727,22 @@ export default function User({ params }) {
                                           </p>
                                         </a>
                                       </div>
+                                    </td>
+                                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-500">
+                                      <span
+                                        className="font-medium text-indigo-600 hover:text-indigo-500 cursor-pointer"
+                                        onClick={() => {
+                                          if (transaction?.invoice_id) {
+                                            openInvoice(
+                                              transaction?.invoice_id
+                                            );
+                                          }
+                                        }}
+                                      >
+                                        {transaction?.invoice_id
+                                          ? "View Invoice"
+                                          : null}
+                                      </span>
                                     </td>
                                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-500">
                                       <span className="font-medium text-gray-900">

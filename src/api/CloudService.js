@@ -18,8 +18,8 @@ export const fetchSubscription = async (payload) => {
   return res.data;
 };
 
-export const fetchAllInvoices = async (payload) => {
-  const res = await cloudService.post("/razorPay/get-all-invoices", payload);
+export const fetchInvoice = async (payload) => {
+  const res = await cloudService.post("/razorPay/get-invoice", payload);
 
   return res.data;
 };
